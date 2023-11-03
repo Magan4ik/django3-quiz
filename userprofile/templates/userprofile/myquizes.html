@@ -1,0 +1,52 @@
+{% extends 'account/base.html' %}
+
+{% block content %}
+<div class="container">
+  <h1 class="text-center">MY QUIZES</h1>
+  {% for quiz in quizs %}
+  <div class="card position-relative start-50 translate-middle-x w-50 text-bg-info border-0 mt-3 mb-3" style="width: 18rem;">
+    <div class="card-header ">
+      <h5 class="card-title">{{ quiz.question }}</h5>
+      <h6 class="card-subtitle mb-2 text-body-secondary">
+        {% with tags=tag_list|slice:forloop.counter|last %}
+        {% for tag in tags %}
+        <span class="badge bg-primary me-1">#{{ tag }}</span>
+        {% endfor %}
+        {% endwith %}
+      </h6>
+    </div>
+      {{ mes }}
+      {% with i=forloop.counter %}
+      <ol class="list-group list-group-flush">
+      {% for var in quiz.answers %}
+        {% with per=poa|slice:i|last %}
+        <li class="list-group-item list-group-item-primary border-0 p-2">
+
+          <div class="progress" role="progressbar" aria-label="Basic example" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="height: 30px">
+            <div class="progress-bar overflow-visible text-dark bg-info" style="width: {{ per|slice:forloop.counter|last }}%">
+              <p class="text-start ms-2 mt-3">
+                <strong>
+                  {{ forloop.counter }}.
+                  {{ var }}
+                  ({{ per|slice:forloop.counter|last }} %)
+                </strong>
+              </p>
+
+            </div>
+          </div>
+        </li>
+
+        {% endwith %}
+      {% endfor %}
+      {% endwith %}
+      </ol>
+      <div class="card-footer">
+        <label>Correct answers: {{ quiz.correct_answers }}</label><br>
+        <label>Percent of correct answers: {{ poc|slice:forloop.counter|last }} %</label>
+      </div>
+
+  </div>
+  {% endfor %}
+
+
+{% endblock %}

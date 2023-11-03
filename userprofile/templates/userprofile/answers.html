@@ -1,0 +1,39 @@
+{% extends 'account/base.html' %}
+
+{% block content %}
+
+<div class="continer">
+  <h1 class="text-center">MY ANSWERS</h1>
+  {% for quiz in quizs %}
+  {% with c=cor|slice:forloop.counter|last %}
+  <div class="card position-relative start-50 translate-middle-x w-50 {% if c.2 == 'CORRECT' %}text-bg-success{% else %}text-bg-danger{% endif %} border-0 mt-3 mb-3" style="width: 18rem;">
+    <div class="card-header ">
+      <h5 class="card-title">{{ quiz.question }}</h5>
+      <h6 class="card-subtitle mb-2 text-body-secondary">{{ c.2 }}</h6>
+    </div>
+    <!-- <div class="card-body"> -->
+      {{ mes }}
+      <ol class="list-group list-group-numbered list-group-flush">
+      {% for var in quiz.answers %}
+        {% if c.0 == c.1 and c.0 == forloop.counter %}
+          <li class="list-group-item text-bg-info border-0">{{ var }}</li>
+        {% elif c.0 != c.1 and c.0 == forloop.counter %}
+          <li class="list-group-item text-bg-warning border-0">{{ var }}</li>
+        {% elif c.1 == forloop.counter %}
+          <li class="list-group-item text-bg-info border-0">{{ var }}</li>
+        {% else %}
+          <li class="list-group-item list-group-item-info border-0">{{ var }}</li>
+        {% endif %}
+      {% endfor %}
+      </ol>
+      {% endwith %}
+      <!-- </div> -->
+  </div>
+  {% endfor %}
+
+
+
+</div>
+
+
+{% endblock %}

@@ -1,0 +1,185 @@
+{% extends 'account/base.html' %}
+
+{% block content %}
+
+<script>
+  var counter = 2;
+
+  var tags = [];
+
+  function addRadio(){
+    counter = counter + 1;
+
+    var radioInput = document.createElement("input");
+    radioInput.type = "radio";
+    radioInput.name = "right_answer";
+    radioInput.id = "radio" + counter;
+    radioInput.className = "form-check-input mt-0";
+    radioInput.value = counter;
+
+    var textInput = document.createElement("input");
+    textInput.type = "text";
+    textInput.name = "variant " + counter;
+    textInput.id = "var " + counter;
+    textInput.className = "form-control";
+    textInput.setAttribute("required", "required")
+
+    var removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.name = "remove"
+    removeButton.id = "remove " + counter;
+    removeButton.className = "btn btn-danger";
+    removeButton.setAttribute("onclick", "removeRadio(this)")
+
+    // Создаем элемент <svg>
+    var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    svg.setAttribute("height", "1.3em");
+    svg.setAttribute("viewBox", "0 0 448 512");
+
+    // Создаем элемент <path> и устанавливаем его атрибут "d"
+    var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", "M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z");
+
+    // Добавляем элемент <path> в элемент <svg>
+    svg.appendChild(path);
+    removeButton.appendChild(svg)
+
+
+    var inputGroupDiv = document.createElement('div');
+    inputGroupDiv.className = 'input-group mb-3';
+    inputGroupDiv.id = "ig " + counter;
+
+    var inputGroupTextDiv = document.createElement('div');
+    inputGroupTextDiv.className = 'input-group-text';
+    inputGroupTextDiv.id = "igt " + counter;
+
+    inputGroupTextDiv.appendChild(radioInput);
+    inputGroupDiv.appendChild(inputGroupTextDiv);
+    inputGroupDiv.appendChild(textInput);
+    inputGroupDiv.appendChild(removeButton)
+
+    var container = document.getElementById('container');
+    container.appendChild(inputGroupDiv);
+
+    var countInput = document.getElementById('counter');
+    countInput.value = counter;
+
+  };
+
+  function removeRadio(button){
+    var btnid = button.id;
+    var splitid = btnid.split(" ");
+    var c = splitid[splitid.length - 1];
+
+    var div1 = document.getElementById('ig ' + c);
+    div1.remove();
+
+
+
+  };
+
+  function addTag(){
+    var tagInput = document.getElementById("tag_name");
+    var tagDiv = document.getElementById("tags");
+    var tagResult = document.getElementById("tag_feedback")
+    tag = tagInput.value;
+    if (tag.length > 0 & tag.length <= 10){
+      if (tags.indexOf(tag) === -1){
+        tag  = tag.replace(/\s/g, '');
+        tags.push(tag);
+        var tagSpan = document.createElement("span");
+        var removeBut = document.createElement("button");
+        tagSpan.classList.add("badge", "bg-info", "me-1");
+        tagSpan.textContent = "#" + tag;
+        id = tags.length - 1;
+        tagSpan.id = "tag " + id;
+        removeBut.type = "button";
+        removeBut.name = "delete";
+        removeBut.id = "removeBut " + id;
+        removeBut.className = "btn p-0";
+        removeBut.setAttribute("onclick", "removeTag(this)");
+        removeBut.appendChild(tagSpan);
+        tagDiv.appendChild(removeBut);
+        tagInput.value = "";
+        tagInput.classList.add("is-valid");
+        tagInput.classList.remove("is-invalid");
+      } else {
+        tagResult.classList.remove("valid-feedback");
+        tagResult.classList.add("invalid-feedback");
+        tagInput.classList.remove("is-valid");
+        tagInput.classList.add("is-invalid");
+        tagResult.textContent = "Tag has already been added";
+      };
+
+    } else {
+      tagResult.classList.remove("valid-feedback");
+      tagResult.classList.add("invalid-feedback");
+      tagInput.classList.remove("is-valid");
+      tagInput.classList.add("is-invalid");
+      tagResult.textContent = "Name is too long or missing";
+    };
+  };
+  function removeTag(button){
+    var btnid = button.id;
+    var splitid = btnid.split(" ");
+    var c = splitid[splitid.length - 1];
+    tags.splice(c)
+    var tag = document.getElementById("tag " + c);
+    tag.remove();
+  }
+  function sendForm(form, event) {
+    event.preventDefault();
+    var hideInput = document.createElement("input");
+    hideInput.type = "hidden";
+    hideInput.name = "tags";
+    hideInput.value = tags;
+    form.appendChild(hideInput);
+
+    form.submit();
+  }
+</script>
+
+<form method="post" id="createQuiz" onsubmit="return sendForm(this, event)">
+  {% csrf_token %}
+  <div class="row g-3 justify-content-center">
+    <div class="col-5">
+      <h1>Creating Quiz</h1>
+      {{ err }}
+      <!-- Вопрос -->
+      <div class="input-group mb-3">
+        <label class="input-group-text" for="question_input">Question</label>
+        <input type="text" name="question" class="form-control" id="question_input" placeholder="Your question" required>
+      </div>
+      <!-- Добавление тегов -->
+      <div class="input-group has-validation mb-1">
+        <label class="input-group-text" for="tag_name">#</label>
+        <input type="text" class="form-control" name="add_tags" id="tag_name" placeholder="tag">
+        <div class="invalid-feedback" id="tag_feedback">Name is too long or missing</div>
+      </div>
+      <button type="button" onclick="addTag()" class="btn p-0" id="add_tag"><span class="badge bg-primary">add tag</span></button>
+      <div id="tags"></div><!-- Теги -->
+      <!-- Добавление вариантов ответа -->
+      <div id="container">
+        <label for="var">Variants:</label>
+        <div class="input-group mb-3" id="ig 1">
+          <div class="input-group-text" id="igt 1">
+            <input class="form-check-input mt-0" type="radio" value="1" name = "right_answer" id="radio1" required>
+          </div>
+          <input type="text" class="form-control" name="variant 1" id ="var 1" required>
+        </div>
+        <div class="input-group mb-3" id="ig 2">
+          <div class="input-group-text" id="igt 2">
+            <input class="form-check-input mt-0" type="radio" value="2" name = "right_answer" id="radio2">
+          </div>
+          <input type="text" class="form-control" name="variant 2" id ="var 2" required>
+        </div>
+      </div>
+      <!-- ------ -->
+      <input type="hidden" name="counter" id="counter" value="2">
+      <button type="button" onclick="addRadio()" class="btn btn-primary mb-3" name="button">Add variant</button><br>
+      <button type="submit" class="btn btn-success" name="button">Create</button>
+    </div>
+  </div>
+</form>
+{% endblock %}

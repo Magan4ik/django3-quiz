@@ -1,0 +1,29 @@
+{% extends 'account/base.html' %}
+
+{% block content %}
+
+{{ user.username }}<br>
+
+<img src="{{ avatar_url }}" class="rounded">
+<a href="{% url 'userprofile:myquizes' %}">My Quizes</a>
+<a href="{% url 'userprofile:answers' %}">My answers</a>
+<a href="{% url 'userprofile:createquiz' %}">Create Quiz</a>
+<a href="{% url 'userprofile:redactprofile' %}">redact profile</a>
+<br>
+My quizes:
+<br>
+number of quizes: {{ num_of_quizs }}
+<br>
+number of answers: {{ num_of_ans }}
+<br>
+number of correct answers: {{ correct_sum }} ({{ per }}%)
+<br>
+<br>
+My answers:
+<br>
+number of answers: {{ my_ans }}
+<br>
+number of correct: {{ my_cor_ans }} ({{ my_cor_per }}%)
+<br>
+{{ mes }}
+{% endblock %}
