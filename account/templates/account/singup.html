@@ -1,0 +1,199 @@
+{% extends 'account/base.html' %}
+
+{% block content %}
+
+<form method="post" enctype="multipart/form-data">
+  <div class="row g-3 justify-content-center">
+    <div class="col-5">
+    {% csrf_token %}
+    <div class="input-group has-validation mb-3">
+      <label class="input-group-text" for="username_input">username</label>
+      <input type="text" name="username" class="form-control" id="username_input" placeholder="username" required>
+      <div id="validationServerUsernameFeedback" class="valid-feedback">
+
+      </div>
+    </div>
+    <div class="input-group mb-3">
+      <label class="input-group-text" for="image_input">avatar</label>
+      <input type="file" name="file_input" class="form-control" id="image_input" required>
+      <div id="validationServerImageFeedback" class="valid-feedback">
+
+      </div>
+    </div>
+    <div class="input-group mb-3">
+      <label class="input-group-text" for="password1">password</label>
+      <input type="password" name="password1" class="form-control" id="password1" placeholder="password" required>
+      <div id="validationServerPas1Feedback" class="valid-feedback">
+
+      </div>
+    </div>
+    <div class="input-group mb-3">
+      <label class="input-group-text" for="password2">confirm password</label>
+      <input type="password" name="password2" class="form-control" id="password2" placeholder="password" required>
+      <div id="validationServerPas2Feedback" class="valid-feedback">
+
+      </div>
+    </div>
+    <div class="container d-flex justify-content-end pe-0">
+      <a href="{% url 'home' %}" class = "btn btn-outline-primary me-1">Home</a>
+      <button type="submit" name="button" class="btn btn-success" id="submitButton">Sing Up</button>
+    </div>
+  </div>
+
+  </div>
+
+</form>
+<script>
+    var imageField = document.getElementById('image_input');
+    var usernameField = document.getElementById('username_input');
+    var password1Field = document.getElementById('password1');
+    var password2Field = document.getElementById('password2');
+
+    var usernameResult = document.getElementById('validationServerUsernameFeedback');
+    var imageResult = document.getElementById('validationServerImageFeedback');
+    var pas1Result = document.getElementById('validationServerPas1Feedback');
+    var pas2Result = document.getElementById('validationServerPas2Feedback');
+
+
+    var fileInput = document.getElementById('file_input');
+
+    var submitButton = document.getElementById('submitButton');
+    submitButton.setAttribute('disabled', 'disabled');
+
+    var delayTimer; // Таймер для задержки запроса
+    var imageCheck;
+    var usernameCheck;
+
+    function getCookie(name) {
+      var cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+          var cookies = document.cookie.split(';');
+          for (var i = 0; i < cookies.length; i++) {
+              var cookie = cookies[i].trim();
+              // Проверяем, начинается ли кука с имени, которое мы ищем
+              if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                  cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                  break;
+              }
+          }
+      }
+      return cookieValue;
+    }
+
+
+    usernameField.addEventListener('input', function () {
+    // Сбросить предыдущий таймер, если он существует
+    clearTimeout(delayTimer);
+
+    // Получить содержимое поля ввода
+    var inputValue = usernameField.value.trim();
+
+    // Установить задержку перед выполнением запроса (например, 1000 миллисекунд)
+    delayTimer = setTimeout(function () {
+        if (inputValue.length > 0) {
+            var csrftoken = getCookie('csrftoken');
+            // Выполнить AJAX-запрос на сервер для проверки
+            // В этом примере используется библиотека jQuery для упрощения AJAX
+            $.ajax({
+                url: 'checkusername/',
+                method: 'POST', // Или 'GET', в зависимости от вашего случая
+                data: {input_value: inputValue},
+                headers: {
+                  "X-CSRFToken": csrftoken
+                },
+                success: function (response) {
+                if (response.check) {
+                  // Отобразить результат проверки на странице
+                  usernameField.classList.remove("is-invalid");
+                  usernameField.classList.add("is-valid");
+                  usernameResult.classList.remove("invalid-feedback");
+                  usernameResult.classList.add("valid-feedback");
+                  usernameResult.textContent = "Nice!";
+                  usernameCheck = true;
+                } else {
+                  usernameField.classList.remove("is-valid");
+                  usernameField.classList.add("is-invalid");
+                  usernameResult.classList.remove("valid-feedback");
+                  usernameResult.classList.add("invalid-feedback");
+                  usernameResult.textContent = "Wrong username!";
+                  usernameCheck = false;
+                }
+              }
+                });
+        } else {
+            // Поле ввода пустое, очистить результат
+            usernameResult.textContent = '';
+        }
+    }, 1000); // 1000 миллисекунд (1 секунда) задержки перед запросом
+    });
+
+
+    imageField.addEventListener('change', function() {
+    // Получите выбранный файл
+    var file = imageField.files[0];
+
+    // Создайте объект FileReader
+    var reader = new FileReader();
+
+    // Установите обработчик события load, который выполнится после загрузки файла
+    reader.onload = function(e) {
+        // Проверьте, является ли файл изображением
+        var image = new Image();
+        image.src = e.target.result;
+
+        image.onload = function() {
+            // Файл является изображением
+            imageField.classList.remove("is-invalid");
+            imageField.classList.add("is-valid");
+            imageResult.classList.remove("invalid-feedback");
+            imageResult.classList.add("valid-feedback");
+            imageResult.textContent = "Nice!";
+            imageCheck = true;
+        };
+
+        image.onerror = function() {
+            // Файл не является изображением
+            imageField.classList.remove("is-valid");
+            imageField.classList.add("is-invalid");
+            imageResult.classList.remove("valid-feedback");
+            imageResult.classList.add("invalid-feedback");
+            imageResult.textContent = "Wrong file!";
+            imageCheck = false;
+        };
+    };
+
+    // Прочитайте содержимое файла как Data URL
+    reader.readAsDataURL(file);
+    });
+
+    function check(){
+      var pas1 = password1Field.value.trim();
+      var pas2 = password2Field.value.trim();
+      if ((imageCheck & usernameCheck) & (pas1 == pas2) & pas1.length > 0){
+        password2Field.classList.remove("is-invalid");
+        password2Field.classList.add("is-valid");
+        pas2Result.classList.remove("invalid-feedback");
+        pas2Result.classList.add("valid-feedback");
+        pas2Result.textContent = "Nice!"
+        submitButton.removeAttribute('disabled');
+      } else if ((pas1 != pas2) & (pas1.length > 0 & pas2.length > 0)){
+        password2Field.classList.remove("is-valid");
+        password2Field.classList.add("is-invalid");
+        pas2Result.classList.remove("valid-feedback");
+        pas2Result.classList.add("invalid-feedback");
+        pas2Result.textContent = "Passwords didn't match!"
+        submitButton.setAttribute('disabled', 'disabled');
+      } else if ((pas1 == pas2) & (pas1.length > 0 & pas2.length > 0)){
+        password2Field.classList.remove("is-invalid");
+        password2Field.classList.add("is-valid");
+        pas2Result.classList.remove("invalid-feedback");
+        pas2Result.classList.add("valid-feedback");
+        pas2Result.textContent = "Nice!"
+        submitButton.setAttribute('disabled', 'disabled');
+      }else {
+        submitButton.setAttribute('disabled', 'disabled');
+      }
+    };
+var intervalId = setInterval(check, 1000);
+</script>
+{% endblock %}

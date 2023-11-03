@@ -1,0 +1,189 @@
+{% extends 'account/base.html' %}
+
+{% block content %}
+<script>
+  function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            // Проверяем, начинается ли кука с имени, которое мы ищем
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+  function checkFieldChanges(event, formId) {
+    event.preventDefault();
+    var csrftoken = getCookie('csrftoken');
+    var formdata = $("#myForm_" + formId).serialize();
+
+    var scrollPosition; // Глобальная переменная для хранения позиции прокрутки
+    // Сохраняем текущую позицию прокрутки при загрузке страницы
+    scrollPosition = $(window).scrollTop();
+
+    $.ajax({
+      url: 'getanswer/',
+      type: "POST",
+      headers: {
+        "X-CSRFToken": csrftoken
+      },
+      data: formdata,
+      success: function(data) {
+        if (data.changed) {
+          // Поле изменилось, выполните необходимые действия
+          // Например, обновите содержимое страницы или выполните перенаправление
+          $("#result").load(window.location.href + " #result"); // Пример обновления страницы
+          // Восстанавливаем позицию прокрутки после обновления
+          $(window).scrollTop(scrollPosition);
+          console.log(scrollPosition)
+          console.log(data.correct)
+        } else {
+          console.log("no ans")
+          // Поле не изменилось, повторяем проверку через 1 секунду
+          //setTimeout(checkFieldChanges, 1000);
+        }
+      }
+    });
+    return false;
+  };
+
+</script>
+
+<div class="container" id="result">
+  <h1 class="text-center">QUIZES</h1>
+  <div class="row justify-content-center">
+    <div class="col-5">
+      <div id="tags"></div>
+      <input type="text" class="form-control mt-2" placeholder="search tag" id="inputTag">
+      <div id="search"></div>
+    </div>
+  </div>
+
+
+{% for quiz in quizs %}
+<form method="post" id="myForm_{{ quiz.id }}" onsubmit="return checkFieldChanges(event, {{ quiz.id }})">
+  {% csrf_token %}
+  <input type="hidden" name="form_id" value="{{ quiz.id }}">
+  <div class="card position-relative start-50 translate-middle-x w-50 border-0 mt-3 mb-3" style="width: 18rem;">
+    <div class="card-header text-bg-info">
+      <img src="{{ quiz.user.avatar.url }}" class="rounded" width=50 height=50>
+      <label class="card-title h5">{{ quiz.question|slice:80 }}</label>
+      <h6 class="card-subtitle mt-2 text-body-secondary">{{ quiz.user.username }}{% for tag in quiz.tags %}<span class="badge bg-primary me-1 ms-1">#{{ tag }}</span>{% endfor %}</h6>
+    </div>
+    <ol class="list-group list-group-flush">
+      {{ mes }}
+      {% for var in quiz.answers %}
+      <li class="list-group-item list-group-item-primary list-group-item-action">
+        {{ forloop.counter }}.
+        <input type="radio" class="form-check-input me-1" name="answer" id="{{ quiz.id }} {{ forloop.counter }}" value="{{ var }}">
+        <label class="form-check-label stretched-link" for="{{ quiz.id }} {{ forloop.counter }}">{{ var }}</label>
+      </li>
+      {% endfor %}
+
+      <!-- <input type="hidden" name="q" value="{{ quiz }}"> -->
+      <button type="submit" class="list-group-item list-group-item-action text-bg-primary text-center" name="button"">answer</button>
+      </ol>
+    </div>
+</form>
+{% endfor %}
+</div>
+<script>
+  var tagInput = document.getElementById("inputTag");
+  var tagSelect = document.getElementById("selectTag");
+  var searchDiv = document.getElementById("search");
+  var tagNames = [];
+  var searchList = [];
+  tagInput.addEventListener("input", function () {
+    taglist = {{ tags|safe }}
+
+    val = tagInput.value
+    while (searchDiv.firstChild){
+      searchDiv.removeChild(searchDiv.firstChild)
+    };
+    var tagCounter = 0;
+    for (var tag of taglist){
+      if (tag.includes(val) & val != ""){
+        tagCounter = tagCounter + 1;
+        var tagSpan = document.createElement("span");
+        var removeBut = document.createElement("button");
+        tagSpan.classList.add("badge", "text-bg-light", "me-1");
+        tagSpan.textContent = "#" + tag;
+        id = tagCounter;
+        tagSpan.id = "tag " + id;
+        removeBut.type = "button";
+        removeBut.name = "delete";
+        removeBut.id = "addBut " + id;
+        removeBut.className = "btn p-0";
+        removeBut.setAttribute("onclick", "addTag(this)");
+        removeBut.setAttribute("data-tag", tag)
+        removeBut.appendChild(tagSpan);
+        searchDiv.appendChild(removeBut);
+      };
+    };
+
+});
+  function addTag(button){
+    var tagInput = document.getElementById("inputTag");
+    var tagDiv = document.getElementById("tags");
+    var tagSelect = document.getElementById("selectTag")
+    var tag = button.getAttribute("data-tag");
+    if (tagNames.indexOf(tag) === -1){
+      tagNames.push(tag);
+      var tagSpan = document.createElement("span");
+      var removeBut = document.createElement("button");
+      tagSpan.classList.add("badge", "bg-info", "me-1");
+      tagSpan.textContent = "#" + tag;
+      id = tagNames.length - 1;
+      tagSpan.id = "tag " + tag;
+      removeBut.type = "button";
+      removeBut.name = "delete";
+      removeBut.id = "removeBut " + tag;
+      removeBut.className = "btn p-0";
+      removeBut.setAttribute("onclick", "removeTag(this)");
+      removeBut.appendChild(tagSpan);
+      tagDiv.appendChild(removeBut);
+      console.log(tagNames)
+      filter();
+    };
+  };
+  function removeTag(button){
+    var btnid = button.id;
+    var splitid = btnid.split(" ");
+    var c = splitid[splitid.length - 1];
+    tagNames.splice(tagNames.indexOf(c), 1);
+    var tag = document.getElementById("tag " + c);
+    tag.remove();
+    filter();
+  };
+  function haveIntersection(list1, list2) {
+    for (var i = 0; i < list1.length; i++) {
+        if (list2.includes(list1[i])) {
+            return true; // Найдено пересечение
+        };
+    };
+    return false; // Пересечений не найдено
+  };
+  function isSubset(subArray, mainArray) {
+    return subArray.every(item => mainArray.includes(item));
+  };
+  function filter() {
+    var quizes = {{ serquizs|safe }};
+    for (var quiz of quizes){
+      if (!isSubset(tagNames, quiz["fields"]["tags"]) & tagNames.length != 0){
+        var qform = document.getElementById("myForm_" + quiz["pk"]);
+        qform.style.display = "none";
+
+      } else {
+        var qform = document.getElementById("myForm_" + quiz["pk"]);
+        qform.style.display = "";
+      }
+    };
+  };
+</script>
+{% endblock %}
